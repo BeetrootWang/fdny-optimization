@@ -2,7 +2,9 @@ import numpy as np
 import gurobipy as gp
 from gurobipy import GRB 
 
-def solve_ip(N, T, S, d, a, l, u, alpha):
+M = 9999999
+
+def solve_ip(N, T, S, d, a, l, u, alpha, tust):
     '''
     Solve IP and return objective and solution
 
@@ -24,6 +26,8 @@ def solve_ip(N, T, S, d, a, l, u, alpha):
         Maximum number of call dispatchers that can be stationed at each PSAC.
     alpha : (2, 1) np.array of floats
         Maximum proportion of E/F staff relative to A/B/C staff at each PSAC.
+    tust : np.array of ints
+        Total allowed unique starting times at each PSAC for each platoon type.
     '''
     model = gp.Model("IP")
 
@@ -40,6 +44,7 @@ def solve_ip(N, T, S, d, a, l, u, alpha):
     # set objective
     model.setObjective(x1.sum() + x2.sum() + y1.sum() + y2.sum(), GRB.MINIMIZE)
     working = [None for _ in range(N)]
+
     # set constraints
     for n in range(N):
         p1n = gp.quicksum(x1[t] for t in S[0][0][n]) + gp.quicksum(y1[t] for t in S[0][1][n])
@@ -58,7 +63,32 @@ def solve_ip(N, T, S, d, a, l, u, alpha):
     model.addConstrs((y1[t] == 4 * n1[t] for t in range(T[0][1])))
     model.addConstrs((x2[t] == 4 * m2[t] for t in range(T[1][0])))
     model.addConstrs((y2[t] == 4 * n2[t] for t in range(T[1][1])))
-    
+
+    if tust is not None:
+        q1 = model.addVars(T[0][0], vtype=GRB.BINARY, name="q1")
+        r1 = model.addVars(T[0][1], vtype=GRB.BINARY, name="r1")
+        q2 = model.addVars(T[1][0], vtype=GRB.BINARY, name="q2")
+        r2 = model.addVars(T[1][1], vtype=GRB.BINARY, name="r2")
+        
+        model.addConstrs((x1[t] <= M*q1[t] for t in range(T[0][0])))
+        model.addConstrs((y1[t] <= M*r1[t] for t in range(T[0][1])))
+        model.addConstrs((x2[t] <= M*q2[t] for t in range(T[1][0])))
+        model.addConstrs((y2[t] <= M*r2[t] for t in range(T[1][1])))
+
+        if tust.size == 4:
+            model.addConstr(q1.sum() <= tust[0][0])
+            model.addConstr(r1.sum() <= tust[0][1])
+            model.addConstr(q2.sum() <= tust[1][0])
+            model.addConstr(r2.sum() <= tust[1][1])
+        elif tust.shape == (2, 1):
+            model.addConstr(q1.sum() + q2.sum() <= tust[0][0])
+            model.addConstr(r1.sum() + r2.sum() <= tust[1][0])
+        elif tust.shape == (1, 2):
+            model.addConstr(q1.sum() + r1.sum() <= tust[0])
+            model.addConstr(q2.sum() + r2.sum() <= tust[1])
+        else:
+            model.addConstr(q1.sum() + r1.sum() + q2.sum() + r2.sum() <= tust[0])
+
     return solve(model, T, working)
 
 def solve(m, T, working):

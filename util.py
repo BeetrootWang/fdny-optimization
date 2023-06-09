@@ -11,22 +11,30 @@ def S_table(n, l):
             table[i][(i+j) % n] = 1
     return table
 
-def all_start_times(n, s1, s2, st):
+def all_start_times(n, s1, s2, st, rt):
     '''
+    Return the possible starting times for staff
     '''
-    return [
-        [
-            [(s + int(s1) * i) % n for i in range(3) for s in st[0][0]],    # Platoon A/B/C
-            [(s + int(s2) * i) % n for i in range(2) for s in st[0][1]]     # Platoon E/F
-        ],  # psac 1
-        [
-            [(s + int(s1) * i) % n for i in range(3) for s in st[1][0]], 
-            [(s + int(s2) * i) % n for i in range(2) for s in st[1][1]]
-        ]   # psac 2
-    ]
+    if st is not None:
+        return [
+            [
+                [(s + int(s1) * i) % n for i in range(3) for s in st[0][0]],    # Platoon A/B/C
+                [(s + int(s2) * i) % n for i in range(2) for s in st[0][1]]     # Platoon E/F
+            ],  # psac 1
+            [
+                [(s + int(s1) * i) % n for i in range(3) for s in st[1][0]], 
+                [(s + int(s2) * i) % n for i in range(2) for s in st[1][1]]
+            ]   # psac 2
+        ]
+
+    if rt is not None:
+        return [[[t for t in range(n) if t not in rt[i][j]] for j in range(2)] for i in range(2)]
+        
+    return [[[t for t in range(n)] for _ in range(2)] for _ in range(2)]
 
 def get_S(n, s1, s2, st):
     '''
+    Return the set S (indices of starting times with rostered staff currently working, at each time interval n.)
     '''
     S_abc, S_ef = S_table(n, s1), S_table(n, s2)
     
@@ -43,6 +51,7 @@ def get_S(n, s1, s2, st):
 
 def calculate_required_staff(n_calls, awt=36/60, aht=3, interval=60, service_level=0.9, max_utilization=0.85):
     '''
+    Return the required number of staff that need to be seated
     '''
     erlang = ErlangC(transactions=n_calls, asa=awt, aht=aht, interval=interval, shrinkage=0.)
     requirements = erlang.required_positions(service_level=service_level, max_occupancy=max_utilization)

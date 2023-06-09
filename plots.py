@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def plot_roster_start(n_time_intervals, start_times, x1, y1, x2, y2):
-    '''
-    '''
+
     s = list(range(n_time_intervals))
+    # s = np.arange(np.datetime64("2023-06-06"), np.datetime64("2023-06-07"), np.timedelta64(30, "m"))
     sx1, sx2, sy1, sy2 = np.zeros(n_time_intervals), np.zeros(n_time_intervals), \
         np.zeros(n_time_intervals), np.zeros(n_time_intervals)
     sx1[start_times[0][0]] = x1
@@ -23,10 +23,9 @@ def plot_roster_start(n_time_intervals, start_times, x1, y1, x2, y2):
     plt.show()
 
 def plot_staff_required_working(staff_rostered, required_staff):
-    '''
-    '''
-    plt.plot(staff_rostered, label="Staff Rostered")
-    plt.plot(required_staff, label="Required Staff Working")
+
+    plt.plot(staff_rostered, label="Staff Working")
+    plt.plot(required_staff, label="Required Dispatchers Seated")
     plt.ylabel("Count")
     plt.xlabel("Time Interval") 
     plt.title("Rostered Staff over Time (w.r.t. absences and 4-staff-3-seat rule)")
@@ -34,8 +33,7 @@ def plot_staff_required_working(staff_rostered, required_staff):
     plt.show()
 
 def plot_utilizations(utilizations):
-    '''
-    '''
+
     plt.plot(utilizations)
     plt.ylabel("Proportion")
     plt.xlabel("Time Interval")
@@ -43,8 +41,7 @@ def plot_utilizations(utilizations):
     plt.show()
 
 def plot_all(n_time_intervals, start_times, staff_rostered, required_staff, utilizations, x1, y1, x2, y2):
-    '''
-    '''
+
     plot_staff_required_working(staff_rostered, required_staff)
     plot_roster_start(n_time_intervals, start_times, x1, y1, x2, y2)
     plot_utilizations(utilizations)
